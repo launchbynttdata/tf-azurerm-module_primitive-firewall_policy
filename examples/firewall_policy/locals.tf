@@ -10,12 +10,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 locals {
-  resource_group        = module.resource_names["resource_group"].standard
-  firewall_name         = module.resource_names["firewall"].standard
-  firewall_policy_name  = module.resource_names["firewall_policy"].standard
-  public_ip_custom_name = module.resource_names["public_ip"].standard
-  virtual_network_name  = module.resource_names["hub_vnet"].standard
-  ip_configuration_name = module.resource_names["hub_vnet_ip_configuration"].standard
+  resource_group        = module.resource_names["resource_group"].minimal_random_suffix
+  firewall_name         = module.resource_names["firewall"].minimal_random_suffix
+  firewall_policy_name  = module.resource_names["firewall_policy"].minimal_random_suffix
+  public_ip_custom_name = module.resource_names["public_ip"].minimal_random_suffix
+  virtual_network_name  = module.resource_names["hub_vnet"].minimal_random_suffix
+  ip_configuration_name = module.resource_names["hub_vnet_ip_configuration"].minimal_random_suffix
 
   firewall_map = {
     "firewall1" = {

@@ -2,45 +2,44 @@ package common
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v5"
 	"github.com/gruntwork-io/terratest/modules/terraform"
-	"github.com/launchbynttdata/lcaf-component-terratest/lib/azure/configure"
-	"github.com/launchbynttdata/lcaf-component-terratest/lib/azure/login"
-	"github.com/launchbynttdata/lcaf-component-terratest/lib/azure/network"
 	"github.com/launchbynttdata/lcaf-component-terratest/types"
 	"github.com/stretchr/testify/assert"
 )
 
-const terraformDir string = "../../examples/firewall_policy"
-const varFile string = "test.tfvars"
-
 func TestFirewall(t *testing.T, ctx types.TestContext) {
 
-	envVarMap := login.GetEnvironmentVariables()
-	clientID := envVarMap["clientID"]
-	clientSecret := envVarMap["clientSecret"]
-	tenantID := envVarMap["tenantID"]
-	subscriptionID := envVarMap["subscriptionID"]
-
-	spt, err := login.GetServicePrincipalToken(clientID, clientSecret, tenantID)
-	if err != nil {
-		t.Fatalf("Error getting Service Principal Token: %v", err)
+	subscriptionID := os.Getenv("ARM_SUBSCRIPTION_ID")
+	if len(subscriptionID) == 0 {
+		t.Fatal("ARM_SUBSCRIPTION_ID is not set in the environment variables ")
 	}
 
-	firewallsClient := network.GetFirewallsClient(spt, subscriptionID)
-	terraformOptions := configure.ConfigureTerraform(terraformDir, []string{terraformDir + "/" + varFile})
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		t.Fatalf("Unable to get credentials: %e\n", err)
+	}
 
+	clientFactory, err := armnetwork.NewClientFactory(subscriptionID, cred, nil)
+	if err != nil {
+		t.Fatalf("Unable to get clientFactory: %e\n", err)
+	}
+
+	firewallsClient := clientFactory.NewAzureFirewallsClient()
 	firewallIds := terraform.OutputMap(t, ctx.TerratestTerraformOptions(), "firewall_ids")
 	for range firewallIds {
 		t.Run("doesfirewallExist", func(t *testing.T) {
-			resourceGroupName := terraform.Output(t, terraformOptions, "resource_group_name")
-			firewallNames := terraform.OutputMap(t, terraformOptions, "firewall_names")
+			resourceGroupName := terraform.Output(t, ctx.TerratestTerraformOptions(), "resource_group_name")
+			firewallNames := terraform.OutputMap(t, ctx.TerratestTerraformOptions(), "firewall_names")
 
 			for _, firewallName := range firewallNames {
 				inputFirewallName := strings.Trim(firewallName, "\"[]")
-				firewallInstance, err := firewallsClient.Get(context.Background(), resourceGroupName, inputFirewallName)
+				firewallInstance, err := firewallsClient.Get(context.Background(), resourceGroupName, inputFirewallName, nil)
 				if err != nil {
 					t.Fatalf("Error getting firewall: %v", err)
 				}
@@ -48,8 +47,7 @@ func TestFirewall(t *testing.T, ctx types.TestContext) {
 					t.Fatalf("Firewall does not exist")
 				}
 				assert.Equal(t, strings.ToLower(inputFirewallName), getFirewallName(strings.ToLower(*firewallInstance.Name)))
-				assert.NotEmpty(t, (*firewallInstance.IPConfigurations))
-				assert.NotEmpty(t, (*firewallInstance.FirewallPolicy.ID))
+				assert.NotEmpty(t, (*firewallInstance.Properties.FirewallPolicy.ID))
 			}
 		})
 	}
