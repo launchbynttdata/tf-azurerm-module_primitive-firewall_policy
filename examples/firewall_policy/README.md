@@ -17,10 +17,10 @@ No providers.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_firewall_policy"></a> [firewall\_policy](#module\_firewall\_policy) | ../.. | n/a |
-| <a name="module_resource_group"></a> [resource\_group](#module\_resource\_group) | git::https://github.com/launchbynttdata/tf-azurerm-module_primitive-resource_group.git | 1.0.0 |
-| <a name="module_firewall"></a> [firewall](#module\_firewall) | git::https://github.com/launchbynttdata/tf-azurerm-module_primitive-firewall.git | 1.0.0 |
-| <a name="module_network"></a> [network](#module\_network) | git::https://github.com/launchbynttdata/tf-azurerm-module_collection-virtual_network.git | 1.0.0 |
-| <a name="module_resource_names"></a> [resource\_names](#module\_resource\_names) | git::https://github.com/launchbynttdata/tf-launch-module_library-resource_name.git | 1.0.0 |
+| <a name="module_resource_group"></a> [resource\_group](#module\_resource\_group) | terraform.registry.launch.nttdata.com/module_primitive/resource_group/azurerm | ~> 1.0 |
+| <a name="module_firewall"></a> [firewall](#module\_firewall) | terraform.registry.launch.nttdata.com/module_primitive/firewall/azurerm | ~> 1.0 |
+| <a name="module_network"></a> [network](#module\_network) | terraform.registry.launch.nttdata.com/module_collection/virtual_network/azurerm | ~> 1.0 |
+| <a name="module_resource_names"></a> [resource\_names](#module\_resource\_names) | terraform.registry.launch.nttdata.com/module_library/resource_name/launch | ~> 1.0 |
 
 ## Resources
 
