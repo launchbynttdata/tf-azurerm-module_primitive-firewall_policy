@@ -18,7 +18,6 @@ module "firewall_policy" {
   location            = var.location_short
 
   depends_on = [module.resource_group, module.network]
-
 }
 
 module "resource_group" {
@@ -31,31 +30,72 @@ module "resource_group" {
     resource_name = local.resource_group
   }
 }
-module "firewall" {
-  source  = "terraform.registry.launch.nttdata.com/module_primitive/firewall/azurerm"
-  version = "~> 1.0"
 
-  firewall_map = local.firewall_map
+module "public_ip" {
+  source  = "terraform.registry.launch.nttdata.com/module_primitive/public_ip/azurerm"
+  version = "~> 2.0"
 
-  depends_on = [module.resource_group, module.network, module.firewall_policy]
-}
+  name                = local.public_ip_custom_name
+  resource_group_name = local.resource_group
+  location            = var.location
+  allocation_method   = "Static"
+  sku                 = "Standard"
 
-
-module "network" {
-  source  = "terraform.registry.launch.nttdata.com/module_collection/virtual_network/azurerm"
-  version = "1.0.0"
-
-  network_map = local.network_map
+  tags = local.tags
 
   depends_on = [module.resource_group]
 }
 
+module "network" {
+  source  = "terraform.registry.launch.nttdata.com/module_primitive/virtual_network/azurerm"
+  version = "~> 3.2"
 
+  resource_group_name = local.resource_group
+  vnet_name           = local.virtual_network_name
+  vnet_location       = var.location
+  address_space       = var.address_space
+
+  subnets = {
+    AzureFirewallSubnet           = { prefix = cidrsubnet(var.address_space[0], 10, 0) }
+    AzureFirewallManagementSubnet = { prefix = cidrsubnet(var.address_space[0], 10, 1) }
+  }
+
+  tags = local.tags
+
+  depends_on = [module.resource_group]
+}
+
+module "firewall" {
+  source  = "terraform.registry.launch.nttdata.com/module_primitive/firewall/azurerm"
+  version = "~> 2.0"
+
+  name                = local.firewall_name
+  resource_group_name = local.resource_group
+  location            = var.location
+  sku_tier            = var.sku_tier
+  firewall_policy_id  = module.firewall_policy.id
+
+  ip_configuration = [{
+    name                 = "Data"
+    subnet_id            = module.network.subnet_name_id_map["AzureFirewallSubnet"]
+    public_ip_address_id = null
+  }]
+
+  management_ip_configuration = {
+    name                 = "Management"
+    subnet_id            = module.network.subnet_name_id_map["AzureFirewallManagementSubnet"]
+    public_ip_address_id = module.public_ip.id
+  }
+
+  tags = local.tags
+
+  depends_on = [module.resource_group, module.network, module.firewall_policy, module.public_ip]
+}
 
 # This module generates the resource-name of resources based on resource_type, naming_prefix, env etc.
 module "resource_names" {
   source  = "terraform.registry.launch.nttdata.com/module_library/resource_name/launch"
-  version = "~> 1.0"
+  version = "~> 2.0"
 
   for_each = var.resource_names_map
 
