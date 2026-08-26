@@ -31,11 +31,11 @@ func TestComposableFirewall(t *testing.T, ctx types.TestContext) {
 	}
 
 	firewallsClient := clientFactory.NewAzureFirewallsClient()
-	firewallIds := terraform.OutputMap(t, ctx.TerratestTerraformOptions(), "firewall_ids")
+	firewallIds := terraform.OutputMapContext(t, context.Background(), ctx.TerratestTerraformOptions(), "firewall_ids")
 	for range firewallIds {
 		t.Run("doesfirewallExist", func(t *testing.T) {
-			resourceGroupName := terraform.Output(t, ctx.TerratestTerraformOptions(), "resource_group_name")
-			firewallNames := terraform.OutputMap(t, ctx.TerratestTerraformOptions(), "firewall_names")
+			resourceGroupName := terraform.OutputContext(t, context.Background(), ctx.TerratestTerraformOptions(), "resource_group_name")
+			firewallNames := terraform.OutputMapContext(t, context.Background(), ctx.TerratestTerraformOptions(), "firewall_names")
 
 			for _, firewallName := range firewallNames {
 				inputFirewallName := strings.Trim(firewallName, "\"[]")
